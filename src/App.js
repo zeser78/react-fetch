@@ -6,7 +6,7 @@ import stocksList from "./list_company.json";
 function App() {
   return (
     <div className="App">
-      <StocksList stocksList={stocksList} />
+      <StocksList {...stocksList} />
     </div>
   );
 }

@@ -6,36 +6,39 @@ import stocksList from "./list_company.json";
 //that I want to loop to have "Symbol" - "Name" - "price"
 //So, from json file I got the symbol to loop into the API to have the price.
 
-const StocksList = props => {
-  const stocksData = props.stocksList.stocksList;
-
-  //Fetching
-  //TODO: Doesn't get the stocksData.price value
-  const fetchData = stocksData.map((stock, index) => {
-    if (index < 10) {
-      let stockData;
-      fetch(
-        `https://financialmodelingprep.com/api/v3/stock/real-time-price/${stock.Symbol}`
-      ).then(response => {
-        if (!response.ok) {
-          console.log("no status : 200");
-          throw new Error(`Status Code Error: ${response.status}`);
-        } else {
-          response.json().then(data => {
-            stockData = data;
-            console.log(stockData.symbol + stockData.price);
-          });
-        }
-      });
-      return (
-        <li>
-          {index + 1} -{stock.Symbol} -{stock.Name} - {stocksData.price}
-        </li>
+const StocksList = ({ stocksList }) => {
+  // const stocksData = props.stocksList.stocksList;
+  const [fetchData, setFetchData] = useState([]);
+  useEffect(() => {
+    const fetchUrls = stocksList
+      .slice(0, 130)
+      .map((stock, index) =>
+        axios.get(
+          `https://financialmodelingprep.com/api/v3/stock/real-time-price/${stock.Symbol}`
+        )
       );
-    }
-  });
+    axios.all(fetchUrls).then(data => {
+      data.map(({ data }) => {
+        //TODO: here can be the filter of the price
+        console.log(data);
+        const { Name } = stocksList.find(
+          slStock => slStock.Symbol === data.symbol
+        );
+        console.log(Name);
+        setFetchData(
+          //TODO: learn this prevData and returning [] breaks
+          prevData => [
+            ...prevData,
+            { name: Name, symbol: data.symbol, price: data.price }
+          ],
+          console.log(data.symbol)
+        );
+      });
+    });
+  }, []);
+
   // Stock List
-  const stocks = stocksData.map((stock, index) => {
+  const stocks = stocksList.map((stock, index) => {
     if (index < 10) {
       return (
         <li key={index}>
@@ -45,12 +48,25 @@ const StocksList = props => {
     }
   });
 
+  const renderStocks = () => {
+    return fetchData.map(({ name, symbol, price }, index) => {
+      //TODO: here I can manipulate to get
+      return (
+        <li key={index}>
+          {`${index + 1} - ${symbol} - ${name} - $${price.toFixed(2)}`}
+        </li>
+      );
+    });
+  };
+
   return (
     <div>
       <h1> Stock List</h1>
       <ul>{stocks}</ul>
       <h2>Fetching</h2>
-      <ul>{fetchData}</ul>
+      {/* <ul>{fetchData}</ul> */}
+      <ul>{fetchData.length > 0 && renderStocks()}</ul>
+      {/* <ul>{renderStocks()}</ul> */}
     </div>
   );
 };
